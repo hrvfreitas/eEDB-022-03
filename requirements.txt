@@ -1,0 +1,6 @@
+pyspark==3.5.3
+pandas==2.2.3
+pyarrow==17.0.0
+rapidfuzz==3.10.1
+splink==4.0.7
+psycopg2-binary==2.9.10

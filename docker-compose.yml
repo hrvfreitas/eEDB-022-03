@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: eedb_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./setup_database.sql:/docker-entrypoint-initdb.d/setup_database.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  spark-etl:
+    build: .
+    container_name: eedb_spark_etl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: eedb
+      SPARK_MASTER: local[*]
+      RAW_ORIGEM_DIR: /opt/data/raw/origem
+      RAW_OUT_DIR: /opt/data/raw
+      TRUSTED_OUT_DIR: /opt/data/trusted
+      DELIVERY_OUT_DIR: /opt/data/delivery
+      # escolha da estratégia de matching aproximado de nomes: fuzzy | splink
+      MATCH_STRATEGY: ${MATCH_STRATEGY:-fuzzy}
+    volumes:
+      - ./data:/opt/data
+
+volumes:
+  pgdata:
